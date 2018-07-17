@@ -181,21 +181,22 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 
 func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
 	mp, err := s.EthCli.GetAllTxPool()
-
 	if err != nil {
 		return err
 	}
 
-	for _, tx := range mp {
-		gas, err := strconv.ParseInt(tx["gas"].(string), 0, 64)
-		if err != nil {
-			log.Errorf("EventGetAllMempool:strconv.ParseInt")
+	for _, txs := range mp["pending"].(map[string]interface{}) {
+		for _, tx := range txs.(map[string]interface{}) {
+			gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
+			if err != nil {
+				log.Errorf("EventGetAllMempool:strconv.ParseInt")
+			}
+			hash := tx.(map[string]interface{})["hash"].(string)
+			stream.Send(&pb.MempoolRecord{
+				Category: int32(gas),
+				HashTX:   hash,
+			})
 		}
-		hash := tx["hash"].(string)
-		stream.Send(&pb.MempoolRecord{
-			Category: int32(gas),
-			HashTX:   hash,
-		})
 	}
 	return nil
 }

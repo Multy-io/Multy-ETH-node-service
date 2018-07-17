@@ -120,11 +120,11 @@ func (rpc *EthRPC) Web3ClientVersion() (string, error) {
 }
 
 // TxPoolContent returns raw txpool.
-func (rpc *EthRPC) TxPoolContent() ([]map[string]interface{}, error) {
-	var txPool []map[string]interface{}
+func (rpc *EthRPC) TxPoolContent() (map[string]interface{}, error) {
+	var txPool map[string]interface{}
 
 	//err := rpc.call("parity_pendingTransactions", &txPool)
-	err := rpc.call("parity_pendingTransactions", &txPool)
+	err := rpc.call("txpool_content", &txPool)
 
 	return txPool, err
 }
