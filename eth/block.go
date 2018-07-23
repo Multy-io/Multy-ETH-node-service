@@ -1,6 +1,7 @@
 package eth
 
 import (
+	_ "github.com/KristinaEtc/slflog"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/onrik/ethrpc"
 )

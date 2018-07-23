@@ -98,6 +98,8 @@ func (c *Client) RunProcess() error {
 		case map[string]interface{}:
 			// tx block transactions
 			// fmt.Println(v)
+
+			log.Debugf("New block number %v ", v["number"].(string))
 			go c.BlockTransaction(v["hash"].(string))
 		}
 	}

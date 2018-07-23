@@ -170,13 +170,14 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	}
 
 	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
-
-	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
-		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
-		if err != nil {
-			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	if int64(currentH) > in.GetHeight() {
+		for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
+			b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
+			if err != nil {
+				log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+			}
+			go s.EthCli.BlockTransaction(b.Hash)
 		}
-		go s.EthCli.BlockTransaction(b.Hash)
 	}
 
 	return &pb.ReplyInfo{
