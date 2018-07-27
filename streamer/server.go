@@ -241,7 +241,7 @@ type resyncTx struct {
 func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	log.Debugf("EventResyncAddress")
 	addr := address.GetAddress()
-	url := "http://api-rinkeby.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address=" + addr + "&action=txlist&module=account"
+	url := "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address=" + addr + "&action=txlist&module=account"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
