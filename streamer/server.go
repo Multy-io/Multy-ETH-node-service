@@ -101,9 +101,14 @@ func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC
 		if err != nil {
 			log.Errorf("GetERC20Info:token.BalanceOf %v", err.Error())
 		}
+
+		balanceToSend := "0"
+		if balance != nil {
+			balanceToSend = balance.String()
+		}
 		addressInfo.Balances = append(addressInfo.Balances, &pb.ERC20Balances{
 			Address: contract,
-			Balance: balance.String(),
+			Balance: balanceToSend,
 		})
 	}
 
@@ -309,13 +314,12 @@ func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.Re
 }
 
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
-	// s.BtcCli.RpcClient.GetTxOut()
-	// var blocks []*chainhash.Hash
 	currentH, err := s.EthCli.GetBlockHeight()
 	if err != nil {
 		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
 
+<<<<<<< HEAD
 	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
 	if int64(currentH) > in.GetHeight() {
 		for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
@@ -325,6 +329,16 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 			}
 			go s.EthCli.BlockTransaction(b.Hash)
 		}
+=======
+	log.Debugf("currentH %v lastH %v dif %v", currentH, in.GetHeight(), int64(currentH)-in.GetHeight())
+
+	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
+		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, true)
+		if err != nil {
+			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+		}
+		go s.EthCli.ResyncBlock(b)
+>>>>>>> origin/resync
 	}
 
 	return &pb.ReplyInfo{
