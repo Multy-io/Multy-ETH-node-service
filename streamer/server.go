@@ -319,17 +319,6 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
 
-<<<<<<< HEAD
-	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
-	if int64(currentH) > in.GetHeight() {
-		for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
-			b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
-			if err != nil {
-				log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
-			}
-			go s.EthCli.BlockTransaction(b.Hash)
-		}
-=======
 	log.Debugf("currentH %v lastH %v dif %v", currentH, in.GetHeight(), int64(currentH)-in.GetHeight())
 
 	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
@@ -338,7 +327,6 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
 		}
 		go s.EthCli.ResyncBlock(b)
->>>>>>> origin/resync
 	}
 
 	return &pb.ReplyInfo{
@@ -346,7 +334,7 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	}, nil
 }
 
-func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
+func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
 	mp, err := s.EthCli.GetAllTxPool()
 	if err != nil {
 		return err
@@ -368,7 +356,7 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 	return nil
 }
 
-// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
+// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
 // 	mp, err := s.EthCli.GetAllTxPool()
 // 	fmt.Println("==========================\n\n\n")
 // 	fmt.Println("%s\n", mp)
@@ -469,7 +457,7 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 
 }
 
-func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
+func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommunications_EventDeleteMempoolServer) error {
 	for del := range s.EthCli.DeleteMempoolStream {
 		err := stream.Send(&del)
 		if err != nil && err.Error() == ErrGrpcTransport {
@@ -481,7 +469,7 @@ func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 	return nil
 }
 
-func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunications_EventAddMempoolRecordServer) error {
+func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommunications_EventAddMempoolRecordServer) error {
 	for add := range s.EthCli.AddToMempoolStream {
 		err := stream.Send(&add)
 		if err != nil && err.Error() == ErrGrpcTransport {
@@ -493,7 +481,7 @@ func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunication
 	return nil
 }
 
-func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) error {
+func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommunications_NewTxServer) error {
 	for tx := range s.EthCli.TransactionsStream {
 		log.Infof("NewTx history - %v", tx.String())
 		err := stream.Send(&tx)
@@ -506,7 +494,7 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 	return nil
 }
 
-func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
+func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommunications_EventNewBlockServer) error {
 	for h := range s.EthCli.BlockStream {
 		log.Infof("New block height - %v", h.GetHeight())
 		err := stream.Send(&h)
@@ -519,7 +507,7 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 	return nil
 }
 
-func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
+func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommunications_AddMultisigServer) error {
 	for m := range s.EthCli.NewMultisigStream {
 		log.Infof("AddMultisig new contract address - %v", m.GetContract())
 		err := stream.Send(&m)
