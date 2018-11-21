@@ -19,12 +19,7 @@ RUN apt-get update && \
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-ETH-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    git checkout reconnect 
-
-# go get github.com/ethereum/go-ethereum/rpc
-
-# RUN cd $GOPATH/src/github.com/Multy-io && \
-#     go get ./...
+    git checkout master 
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
     go get ./... && \
