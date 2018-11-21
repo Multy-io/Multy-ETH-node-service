@@ -5,13 +5,10 @@ cmd/multy
 cmd/multy.config
 cmd/btc.cert
 cmd/back-*
-cmd/log*
-cmd
-cmd/client
+cmd/logs
 cmd/rpc.cert
 cmd/client.config
 cmd/client
-*/logs
 
 rpc.cert
 data-db

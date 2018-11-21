@@ -11,7 +11,7 @@
     "AbiClientUrl": "https://rinkeby.infura.io",
     "PprofPort": ":8080",
     "EtherscanAPIURL": "http://etherscan.io/",
-    "EtherscanAPIKey": "WD98A5XEP7XEEH2HX3IXSMRXPP9K3MUBTD",
+    "EtherscanAPIKey": "key",
     "Logs": {
         "Handlers": [{
                 "Type": "stderr",
