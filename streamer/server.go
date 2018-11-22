@@ -62,6 +62,46 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 	}, nil
 }
 
+func (s *Server) IsEmptyAddress(ctx context.Context, in *pb.AddressToResync) (*pb.IsEmptyResp, error) {
+	balance, err := s.EthCli.GetAddressBalance(in.GetAddress())
+	if err != nil {
+		return nil, fmt.Errorf("IsEmptyAddress: GetAddressBalance err: %v", err.Error())
+	}
+	fmt.Println("------ balance %v", balance.Int64())
+	if balance.Int64() != 0 {
+		return &pb.IsEmptyResp{
+			Empty: false,
+		}, nil
+	}
+
+	url := s.ResyncUrl + in.GetAddress() + "&action=txlist&module=account"
+	request := gorequest.New()
+	resp, _, errs := request.Get(url).Retry(5, 1*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
+	if len(errs) > 0 {
+		// return nil, fmt.Sprintf("IsEmptyAddress: request.Get: err: %v", err[0]err.Error())
+	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("IsEmptyAddress: ioutil.ReadAll err: %v", err.Error())
+	}
+
+	reTx := resyncTx{}
+	if err := json.Unmarshal(respBody, &reTx); err != nil {
+		return nil, fmt.Errorf("IsEmptyAddress: json.Unmarshal err: %v", err.Error())
+	}
+
+	if len(reTx.Result) == 0 {
+		return &pb.IsEmptyResp{
+			Empty: true,
+		}, nil
+	}
+
+	return &pb.IsEmptyResp{
+		Empty: false,
+	}, nil
+
+}
+
 func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC20Info, error) {
 	addressInfo := &pb.ERC20Info{}
 
@@ -70,17 +110,17 @@ func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC
 	request := gorequest.New()
 	resp, _, errs := request.Get(url).Retry(10, 3*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
 	if len(errs) > 0 {
-
+		return nil, fmt.Errorf("IsEmptyAddress: request.Get: err: %v", errs[0].Error())
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(`return errors.Wrap(err, "failed to read response body")`)
+		return nil, fmt.Errorf("IsEmptyAddress: ioutil.ReadAll: err: %v", err)
 	}
 
 	tokenresp := store.EtherscanResp{}
 	if err := json.Unmarshal(respBody, &tokenresp); err != nil {
-		fmt.Println(`fmt.Println("err Unmarshal ", err)`)
+		return nil, fmt.Errorf("IsEmptyAddress: ioutil.ReadAll: err: %v", err)
 	}
 	for _, tx := range tokenresp.Result {
 		addressInfo.History = append(addressInfo.History, &tx)
