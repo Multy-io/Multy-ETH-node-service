@@ -69,6 +69,14 @@ service NodeCommunications {
     rpc GetERC20Info (ERC20Address) returns (ERC20Info){
     }
 
+    // import external seed 
+    rpc IsEmptyAddress (AddressToResync) returns (IsEmpty){
+    }
+
+}
+
+message IsEmpty  {
+    bool Empty  = 1;
 }
 
 message ContractInfo  {
