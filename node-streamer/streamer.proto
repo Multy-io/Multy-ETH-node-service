@@ -70,12 +70,12 @@ service NodeCommunications {
     }
 
     // import external seed 
-    rpc IsEmptyAddress (AddressToResync) returns (IsEmptyResp){
+    rpc IsEmptyAddress (AddressToResync) returns (IsEmpty){
     }
 
 }
 
-message IsEmptyResp  {
+message IsEmpty  {
     bool Empty  = 1;
 }
 

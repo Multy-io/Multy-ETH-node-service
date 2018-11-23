@@ -62,14 +62,13 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 	}, nil
 }
 
-func (s *Server) IsEmptyAddress(ctx context.Context, in *pb.AddressToResync) (*pb.IsEmptyResp, error) {
+func (s *Server) IsEmptyAddress(ctx context.Context, in *pb.AddressToResync) (*pb.IsEmpty, error) {
 	balance, err := s.EthCli.GetAddressBalance(in.GetAddress())
 	if err != nil {
 		return nil, fmt.Errorf("IsEmptyAddress: GetAddressBalance err: %v", err.Error())
 	}
-	fmt.Println("------ balance %v", balance.Int64())
 	if balance.Int64() != 0 {
-		return &pb.IsEmptyResp{
+		return &pb.IsEmpty{
 			Empty: false,
 		}, nil
 	}
@@ -78,7 +77,7 @@ func (s *Server) IsEmptyAddress(ctx context.Context, in *pb.AddressToResync) (*p
 	request := gorequest.New()
 	resp, _, errs := request.Get(url).Retry(5, 1*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
 	if len(errs) > 0 {
-		// return nil, fmt.Sprintf("IsEmptyAddress: request.Get: err: %v", err[0]err.Error())
+		return nil, fmt.Errorf("IsEmptyAddress: request.Get: err: %v", errs[0].Error())
 	}
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -91,12 +90,12 @@ func (s *Server) IsEmptyAddress(ctx context.Context, in *pb.AddressToResync) (*p
 	}
 
 	if len(reTx.Result) == 0 {
-		return &pb.IsEmptyResp{
+		return &pb.IsEmpty{
 			Empty: true,
 		}, nil
 	}
 
-	return &pb.IsEmptyResp{
+	return &pb.IsEmpty{
 		Empty: false,
 	}, nil
 
@@ -110,17 +109,17 @@ func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC
 	request := gorequest.New()
 	resp, _, errs := request.Get(url).Retry(10, 3*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
 	if len(errs) > 0 {
-		return nil, fmt.Errorf("IsEmptyAddress: request.Get: err: %v", errs[0].Error())
+		return nil, fmt.Errorf("GetERC20Info: request.Get: err: %v", errs[0].Error())
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("IsEmptyAddress: ioutil.ReadAll: err: %v", err)
+		return nil, fmt.Errorf("GetERC20Info: ioutil.ReadAll: err: %v", err)
 	}
 
 	tokenresp := store.EtherscanResp{}
 	if err := json.Unmarshal(respBody, &tokenresp); err != nil {
-		return nil, fmt.Errorf("IsEmptyAddress: ioutil.ReadAll: err: %v", err)
+		return nil, fmt.Errorf("GetERC20Info: ioutil.ReadAll: err: %v", err)
 	}
 	for _, tx := range tokenresp.Result {
 		addressInfo.History = append(addressInfo.History, &tx)
@@ -253,14 +252,14 @@ func (s *Server) EventAddNewMultisig(ctx context.Context, address *pb.WatchAddre
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: http.NewRequest = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: http.NewRequest = %s", err.Error()),
 		}, nil
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: http.DefaultClient.Do = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: http.DefaultClient.Do = %s", err.Error()),
 		}, nil
 	}
 	defer res.Body.Close()
@@ -269,23 +268,23 @@ func (s *Server) EventAddNewMultisig(ctx context.Context, address *pb.WatchAddre
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: ioutil.ReadAll = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: ioutil.ReadAll = %s", err.Error()),
 		}, nil
 	}
 
 	if err := json.Unmarshal(body, &reTx); err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: json.Unmarshal = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: json.Unmarshal = %s", err.Error()),
 		}, nil
 	}
 
 	if !strings.Contains(reTx.Message, "OK") {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: !strings.Contains OK a.k.a. bad response form 3-party"),
+			Message: fmt.Sprintf("EventAddNewMultisig: !strings.Contains OK a.k.a. bad response form 3-party"),
 		}, nil
 	}
 
-	log.Debugf("EventResyncAddress %d", len(reTx.Result))
+	log.Debugf("EventAddNewMultisig %d", len(reTx.Result))
 
 	for _, hash := range reTx.Result {
 		s.EthCli.ResyncMultisig(hash.Hash)
@@ -356,7 +355,7 @@ func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.Re
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
 	currentH, err := s.EthCli.GetBlockHeight()
 	if err != nil {
-		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
+		log.Errorf("SyncState:s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
 
 	log.Debugf("currentH %v lastH %v dif %v", currentH, in.GetHeight(), int64(currentH)-in.GetHeight())
@@ -364,7 +363,7 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
 		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, true)
 		if err != nil {
-			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+			log.Errorf("SyncState:s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
 		}
 		go s.EthCli.ResyncBlock(b)
 	}
@@ -395,35 +394,6 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_Ev
 	}
 	return nil
 }
-
-// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
-// 	mp, err := s.EthCli.GetAllTxPool()
-// 	fmt.Println("==========================\n\n\n")
-// 	fmt.Println("%s\n", mp)
-// 	fmt.Println("==========================\n\n\n")
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// for key, value := range mp {
-// 	// 	fmt.Printf("%T ============== %s\n", value, key)
-
-// 	// }
-
-// 	// for _, txs := range mp["result"].(map[string]interface{}) {
-// 	// 	for _, tx := range txs.(map[string]interface{}) {
-// 	// 		gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
-// 	// 		if err != nil {
-// 	// 			log.Errorf("EventGetAllMempool:strconv.ParseInt")
-// 	// 		}
-// 	// 		hash := tx.(map[string]interface{})["hash"].(string)
-// 	// 		stream.Send(&pb.MempoolRecord{
-// 	// 			Category: int32(gas),
-// 	// 			HashTX:   hash,
-// 	// 		})
-// 	// 	}
-// 	// }
-// 	return nil
-// }
 
 type resyncTx struct {
 	Message string `json:"message"`
