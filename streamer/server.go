@@ -378,16 +378,15 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_Ev
 	if err != nil {
 		return err
 	}
-
 	for _, txs := range mp["pending"].(map[string]interface{}) {
 		for _, tx := range txs.(map[string]interface{}) {
-			gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
+			gasPrice, err := strconv.ParseInt(tx.(map[string]interface{})["gasPrice"].(string), 0, 64)
 			if err != nil {
 				log.Errorf("EventGetAllMempool:strconv.ParseInt")
 			}
 			hash := tx.(map[string]interface{})["hash"].(string)
 			stream.Send(&pb.MempoolRecord{
-				Category: int32(gas),
+				Category: gasPrice,
 				HashTX:   hash,
 			})
 		}
