@@ -30,15 +30,16 @@ func (c *Client) txpoolTransaction(txHash string) {
 	}
 
 	if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
-		fi, err := parseFactoryInput(rawTx.Input)
-		if err != nil {
-			log.Errorf("txpoolTransaction:parseFactoryInput: %s", err.Error())
-		}
-		fi.TxOfCreation = txHash
-		fi.FactoryAddress = c.Multisig.FactoryAddress
-		fi.DeployStatus = int64(store.MultisigStatusDeployPending)
-		c.NewMultisigStream <- *fi
-
+		go func() {
+			fi, err := parseFactoryInput(rawTx.Input)
+			if err != nil {
+				log.Errorf("txpoolTransaction:parseFactoryInput: %s", err.Error())
+			}
+			fi.TxOfCreation = txHash
+			fi.FactoryAddress = c.Multisig.FactoryAddress
+			fi.DeployStatus = int64(store.MultisigStatusDeployPending)
+			c.NewMultisigStream <- *fi
+		}()
 	}
 
 }
