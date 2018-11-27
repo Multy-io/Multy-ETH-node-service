@@ -13,7 +13,6 @@ import (
 )
 
 func (c *Client) txpoolTransaction(txHash string) {
-	// rawTX, err := rpc.EthGetTransactionByHash(txHash)
 	rawTx, err := c.Rpc.EthGetTransactionByHash(txHash)
 	if err != nil {
 		log.Errorf("c.Rpc.EthGetTransactionByHash:Get TX Err: %s", err.Error())
@@ -21,25 +20,26 @@ func (c *Client) txpoolTransaction(txHash string) {
 	c.parseETHTransaction(*rawTx, -1, false)
 
 	c.parseETHMultisig(*rawTx, -1, false)
-	// log.Debugf("new txpool tx %v", rawTx.Hash)
 
 	// add txpool record
-	c.AddToMempoolStream <- pb.MempoolRecord{
-		Category: int32(rawTx.Gas),
-		HashTX:   rawTx.Hash,
-	}
-	if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
-
-		// go func() {
-		fi, err := parseFactoryInput(rawTx.Input)
-		if err != nil {
-			log.Errorf("txpoolTransaction:parseFactoryInput: %s", err.Error())
+	if rawTx.GasPrice.IsInt64() {
+		c.AddToMempoolStream <- pb.MempoolRecord{
+			Category: rawTx.GasPrice.Int64(),
+			HashTX:   rawTx.Hash,
 		}
-		fi.TxOfCreation = txHash
-		fi.FactoryAddress = c.Multisig.FactoryAddress
-		fi.DeployStatus = int64(store.MultisigStatusDeployPending)
-		c.NewMultisigStream <- *fi
-		// }()
+	}
+
+	if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
+		go func() {
+			fi, err := parseFactoryInput(rawTx.Input)
+			if err != nil {
+				log.Errorf("txpoolTransaction:parseFactoryInput: %s", err.Error())
+			}
+			fi.TxOfCreation = txHash
+			fi.FactoryAddress = c.Multisig.FactoryAddress
+			fi.DeployStatus = int64(store.MultisigStatusDeployPending)
+			c.NewMultisigStream <- *fi
+		}()
 	}
 
 }

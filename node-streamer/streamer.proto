@@ -189,7 +189,7 @@ message WatchAddress {
 }
 
  message MempoolRecord {
-   int32 category = 1;    
+   int64 category = 1;    
    string hashTX = 2;
 }
 
