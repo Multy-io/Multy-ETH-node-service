@@ -18,7 +18,7 @@ import (
 	"github.com/onrik/ethrpc"
 )
 
-var log = slf.WithContext("eth")
+var log = slf.WithContext("eth").WithCaller(slf.CallerShort)
 
 type Client struct {
 	Rpc                 *ethrpc.EthRPC

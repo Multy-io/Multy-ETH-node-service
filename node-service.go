@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = slf.WithContext("NodeClient")
+var log = slf.WithContext("NodeClient").WithCaller(slf.CallerShort)
 
 // NodeClient is a main struct of service
 type NodeClient struct {

@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	log       = slf.WithContext("main")
+	log       = slf.WithContext("main").WithCaller(slf.CallerShort)
 	branch    string
 	commit    string
 	buildtime string

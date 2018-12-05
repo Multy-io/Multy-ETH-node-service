@@ -25,7 +25,7 @@ import (
 	_ "github.com/jekabolt/slflog"
 )
 
-var log = slf.WithContext("streamer")
+var log = slf.WithContext("streamer").WithCaller(slf.CallerShort)
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
