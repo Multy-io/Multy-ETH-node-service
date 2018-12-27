@@ -1,3 +1,6 @@
+# ⚠️ We've moved to monorepo, and this repository is no longer active ⚠️
+please check out https://github.com/multy-io/multy-back for details
+
 ## Multy-ETH-node-service
 
 Service that processes ETH node and sends custom data by gRPC to Multy-Back.
